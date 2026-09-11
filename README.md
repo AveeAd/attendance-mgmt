@@ -44,10 +44,21 @@ ATTENDANCE_PORT=8080 ATTENDANCE_DB_PATH=attendance.db ./attendance-mgmt
 ## Seeding accounts
 
 Accounts can only be created by an admin/manager (via the app), so a fresh
-database needs at least one admin bootstrapped directly:
+database needs at least one admin bootstrapped directly.
+
+**From source** (dev machine with Go installed):
 
 ```
 cd backend && go run ./cmd/seed <db_path> <employee_code> <name> <pin> [role] [pay_type] [pay_rate] [is_temp]
+```
+
+**On an installed machine with no Go toolchain** (e.g. the office laptop):
+every release also publishes a standalone `attendance-mgmt-seed-<os>-<arch>`
+binary (`.exe` on Windows) — download it from the Releases page, place it
+next to `attendance-mgmt` (or its install folder), and run the same way:
+
+```
+attendance-mgmt-seed-windows-amd64.exe data\attendance.db ADMIN1 "Your Name" 1234
 ```
 
 For a full demo dataset instead, run from the repo root:
