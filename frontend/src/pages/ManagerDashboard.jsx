@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ChangePinForm from '../components/ChangePinForm'
 import { useAuth } from '../context/AuthContext'
 
 const TABS = ['Employees', 'Attendance', 'Reports']
@@ -9,6 +10,7 @@ export default function ManagerDashboard() {
   const { employee, logout } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('Employees')
+  const [showChangePin, setShowChangePin] = useState(false)
 
   async function handleLogout() {
     await logout()
@@ -28,11 +30,16 @@ export default function ManagerDashboard() {
           <Link className="link-button" to="/qr">
             QR code
           </Link>
+          <button className="link-button" onClick={() => setShowChangePin((v) => !v)}>
+            Change PIN
+          </button>
           <button className="link-button" onClick={handleLogout}>
             Log out
           </button>
         </div>
       </header>
+
+      {showChangePin && <ChangePinForm onDone={() => setShowChangePin(false)} />}
 
       <nav className="tabs">
         {TABS.map((t) => (
@@ -53,6 +60,8 @@ function EmployeesTab() {
   const { logout } = useAuth()
   const [employees, setEmployees] = useState([])
   const [error, setError] = useState('')
+  const [resettingPinId, setResettingPinId] = useState(null)
+  const [newPinValue, setNewPinValue] = useState('')
   const [form, setForm] = useState({
     employee_code: '',
     name: '',
@@ -93,6 +102,18 @@ function EmployeesTab() {
     try {
       await api.resetDevice(id)
       await refresh()
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+      setError(err.message)
+    }
+  }
+
+  async function handleResetPin(id) {
+    if (!newPinValue) return
+    try {
+      await api.resetPin(id, newPinValue)
+      setResettingPinId(null)
+      setNewPinValue('')
     } catch (err) {
       if (err.isSessionExpired) return logout()
       setError(err.message)
@@ -165,11 +186,41 @@ function EmployeesTab() {
                 <td>{emp.pay_type === 'hourly' ? `$${emp.pay_rate}/hr` : `$${emp.pay_rate}/mo`}</td>
                 <td>{emp.device_id ? 'registered' : '—'}</td>
                 <td>
-                  {emp.device_id && (
-                    <button className="link-button" onClick={() => handleResetDevice(emp.id)}>
-                      Reset device
-                    </button>
-                  )}
+                  <div className="row-actions">
+                    {emp.device_id && (
+                      <button className="link-button" onClick={() => handleResetDevice(emp.id)}>
+                        Reset device
+                      </button>
+                    )}
+                    {resettingPinId === emp.id ? (
+                      <>
+                        <input
+                          autoFocus
+                          className="inline-input"
+                          inputMode="numeric"
+                          placeholder="New PIN"
+                          value={newPinValue}
+                          onChange={(e) => setNewPinValue(e.target.value)}
+                        />
+                        <button className="link-button" onClick={() => handleResetPin(emp.id)}>
+                          Save
+                        </button>
+                        <button
+                          className="link-button"
+                          onClick={() => {
+                            setResettingPinId(null)
+                            setNewPinValue('')
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button className="link-button" onClick={() => setResettingPinId(emp.id)}>
+                        Reset PIN
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

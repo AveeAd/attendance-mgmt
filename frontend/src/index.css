@@ -164,10 +164,29 @@ button:disabled {
   margin-bottom: 16px;
 }
 
-.header-actions {
+.header-actions,
+.footer-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-input {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  width: 100px;
 }
 
 .qr-page {

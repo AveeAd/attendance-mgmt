@@ -45,6 +45,7 @@ func main() {
 	mux.Handle("POST /api/logout", middleware.RequireAuth(conn)(handlers.Logout(conn)))
 	mux.Handle("POST /api/attendance/punch", middleware.RequireAuth(conn)(handlers.Punch(conn)))
 	mux.Handle("GET /api/attendance/me", middleware.RequireAuth(conn)(handlers.ListMyAttendance(conn)))
+	mux.Handle("POST /api/me/change-pin", middleware.RequireAuth(conn)(handlers.ChangeMyPin(conn)))
 
 	// Manager/admin only
 	managerOnly := func(h http.Handler) http.Handler {
@@ -53,6 +54,7 @@ func main() {
 	mux.Handle("POST /api/employees", managerOnly(handlers.CreateEmployee(conn)))
 	mux.Handle("GET /api/employees", managerOnly(handlers.ListEmployees(conn)))
 	mux.Handle("POST /api/employees/{id}/reset-device", managerOnly(handlers.ResetDevice(conn)))
+	mux.Handle("POST /api/employees/{id}/reset-pin", managerOnly(handlers.ResetPin(conn)))
 	mux.Handle("GET /api/attendance", managerOnly(handlers.ListAttendance(conn)))
 	mux.Handle("PATCH /api/attendance/{id}", managerOnly(handlers.EditAttendanceEvent(conn)))
 	mux.Handle("GET /api/reports/monthly", managerOnly(handlers.MonthlySummary(conn)))

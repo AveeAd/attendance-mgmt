@@ -82,10 +82,14 @@ export const api = {
   logout: () => request('/logout', { method: 'POST' }),
   punch: () => request('/attendance/punch', { method: 'POST' }),
   myAttendance: () => request('/attendance/me'),
+  changeMyPin: (currentPin, newPin) =>
+    request('/me/change-pin', { method: 'POST', body: { current_pin: currentPin, new_pin: newPin } }),
 
   listEmployees: () => request('/employees'),
   createEmployee: (payload) => request('/employees', { method: 'POST', body: payload }),
   resetDevice: (employeeId) => request(`/employees/${employeeId}/reset-device`, { method: 'POST' }),
+  resetPin: (employeeId, newPin) =>
+    request(`/employees/${employeeId}/reset-pin`, { method: 'POST', body: { new_pin: newPin } }),
 
   listAttendance: (params = {}) => {
     const qs = new URLSearchParams(params).toString()

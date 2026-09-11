@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ChangePinForm from '../components/ChangePinForm'
 import { useAuth } from '../context/AuthContext'
 
 const MIN_SHIFT_MS = 60 * 60 * 1000 // mirrors backend minShiftDuration
@@ -12,6 +13,7 @@ export default function StaffPunch() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [now, setNow] = useState(Date.now())
+  const [showChangePin, setShowChangePin] = useState(false)
 
   async function refresh() {
     try {
@@ -95,9 +97,18 @@ export default function StaffPunch() {
         {events.length === 0 && <li className="muted">No events yet</li>}
       </ul>
 
-      <button className="link-button" onClick={handleLogout}>
-        Log out
-      </button>
+      {showChangePin ? (
+        <ChangePinForm onDone={() => setShowChangePin(false)} />
+      ) : (
+        <div className="footer-actions">
+          <button className="link-button" onClick={() => setShowChangePin(true)}>
+            Change PIN
+          </button>
+          <button className="link-button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
+      )}
     </div>
   )
 }
