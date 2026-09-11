@@ -101,6 +101,39 @@ button:disabled {
   color: var(--danger);
 }
 
+.link-button.danger {
+  color: var(--danger);
+}
+
+.link-button.danger:hover {
+  color: var(--accent-dark);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.inline-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.archived-row {
+  opacity: 0.6;
+}
+
 .punch-button {
   width: 100%;
   padding: 28px;

@@ -62,6 +62,8 @@ function EmployeesTab() {
   const [error, setError] = useState('')
   const [resettingPinId, setResettingPinId] = useState(null)
   const [newPinValue, setNewPinValue] = useState('')
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null)
+  const [showArchived, setShowArchived] = useState(false)
   const [form, setForm] = useState({
     employee_code: '',
     name: '',
@@ -120,6 +122,40 @@ function EmployeesTab() {
     }
   }
 
+  async function handleArchive(id) {
+    try {
+      await api.archiveEmployee(id)
+      await refresh()
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+      setError(err.message)
+    }
+  }
+
+  async function handleActivate(id) {
+    try {
+      await api.activateEmployee(id)
+      await refresh()
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+      setError(err.message)
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      await api.deleteEmployee(id)
+      setConfirmingDeleteId(null)
+      await refresh()
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+      setConfirmingDeleteId(null)
+      setError(err.message)
+    }
+  }
+
+  const visibleEmployees = showArchived ? employees : employees.filter((e) => e.is_active)
+
   return (
     <div>
       <div className="card">
@@ -169,7 +205,13 @@ function EmployeesTab() {
       </div>
 
       <div className="card">
-        <h2>All employees</h2>
+        <div className="section-header">
+          <h2>All employees</h2>
+          <label className="inline-checkbox">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+            Show archived
+          </label>
+        </div>
         <table>
           <thead>
             <tr>
@@ -177,17 +219,19 @@ function EmployeesTab() {
               <th>Name</th>
               <th>Role</th>
               <th>Pay</th>
+              <th>Status</th>
               <th>Device</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {employees.map((emp) => (
-              <tr key={emp.id}>
+            {visibleEmployees.map((emp) => (
+              <tr key={emp.id} className={emp.is_active ? '' : 'archived-row'}>
                 <td>{emp.employee_code}</td>
                 <td>{emp.name}</td>
                 <td>{emp.role}</td>
                 <td>{emp.pay_type === 'hourly' ? `NPR ${emp.pay_rate}/hr` : `NPR ${emp.pay_rate}/mo`}</td>
+                <td>{emp.is_active ? 'Active' : <span className="tag">Archived</span>}</td>
                 <td>{emp.device_id ? 'registered' : '—'}</td>
                 <td>
                   <div className="row-actions">
@@ -222,6 +266,30 @@ function EmployeesTab() {
                     ) : (
                       <button className="link-button" onClick={() => setResettingPinId(emp.id)}>
                         Reset PIN
+                      </button>
+                    )}
+                    {emp.is_active ? (
+                      <button className="link-button" onClick={() => handleArchive(emp.id)}>
+                        Archive
+                      </button>
+                    ) : (
+                      <button className="link-button" onClick={() => handleActivate(emp.id)}>
+                        Reactivate
+                      </button>
+                    )}
+                    {confirmingDeleteId === emp.id ? (
+                      <>
+                        <span className="muted">Delete permanently?</span>
+                        <button className="link-button danger" onClick={() => handleDelete(emp.id)}>
+                          Confirm
+                        </button>
+                        <button className="link-button" onClick={() => setConfirmingDeleteId(null)}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button className="link-button danger" onClick={() => setConfirmingDeleteId(emp.id)}>
+                        Delete
                       </button>
                     )}
                   </div>

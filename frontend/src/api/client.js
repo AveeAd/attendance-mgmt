@@ -90,6 +90,9 @@ export const api = {
   resetDevice: (employeeId) => request(`/employees/${employeeId}/reset-device`, { method: 'POST' }),
   resetPin: (employeeId, newPin) =>
     request(`/employees/${employeeId}/reset-pin`, { method: 'POST', body: { new_pin: newPin } }),
+  archiveEmployee: (employeeId) => request(`/employees/${employeeId}/archive`, { method: 'POST' }),
+  activateEmployee: (employeeId) => request(`/employees/${employeeId}/activate`, { method: 'POST' }),
+  deleteEmployee: (employeeId) => request(`/employees/${employeeId}`, { method: 'DELETE' }),
 
   listAttendance: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
