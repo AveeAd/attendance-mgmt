@@ -101,10 +101,10 @@ jobs:
           path: dist-raw
 
       - name: Install nfpm
+        env:
+          NFPM_VERSION: "2.47.0"
         run: |
-          tag=$(curl -sSf https://api.github.com/repos/goreleaser/nfpm/releases/latest | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
-          ver="${tag#v}"
-          curl -sSfL "https://github.com/goreleaser/nfpm/releases/download/${tag}/nfpm_${ver}_amd64.deb" -o /tmp/nfpm.deb
+          curl -sSfL "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/nfpm_${NFPM_VERSION}_amd64.deb" -o /tmp/nfpm.deb
           sudo apt-get install -y /tmp/nfpm.deb
 
       - name: Build packages
