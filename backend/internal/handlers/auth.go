@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"attendance-mgmt/backend/internal/auth"
@@ -39,6 +40,7 @@ func Login(conn *sql.DB) http.HandlerFunc {
 			http.Error(w, "employee_code, pin, and device_id are required", http.StatusBadRequest)
 			return
 		}
+		req.EmployeeCode = strings.ToUpper(strings.TrimSpace(req.EmployeeCode))
 
 		var emp models.Employee
 		var pinHash string

@@ -127,7 +127,11 @@ function EmployeesTab() {
         <form onSubmit={handleCreate} className="form-grid">
           <label>
             Employee ID
-            <input required value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} />
+            <input
+              required
+              value={form.employee_code}
+              onChange={(e) => setForm({ ...form, employee_code: e.target.value.toUpperCase() })}
+            />
           </label>
           <label>
             Name

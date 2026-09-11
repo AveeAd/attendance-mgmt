@@ -35,7 +35,7 @@ export default function Login() {
           <input
             autoFocus
             value={employeeCode}
-            onChange={(e) => setEmployeeCode(e.target.value)}
+            onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
             autoComplete="username"
           />
         </label>

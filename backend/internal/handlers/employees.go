@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"attendance-mgmt/backend/internal/auth"
 	"attendance-mgmt/backend/internal/models"
@@ -33,6 +34,7 @@ func CreateEmployee(conn *sql.DB) http.HandlerFunc {
 			http.Error(w, "employee_code, name, and pin are required", http.StatusBadRequest)
 			return
 		}
+		req.EmployeeCode = strings.ToUpper(strings.TrimSpace(req.EmployeeCode))
 		if req.Role == "" {
 			req.Role = models.RoleStaff
 		}
