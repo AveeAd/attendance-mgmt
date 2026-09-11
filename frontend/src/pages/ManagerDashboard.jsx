@@ -11,10 +11,38 @@ export default function ManagerDashboard() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('Employees')
   const [showChangePin, setShowChangePin] = useState(false)
+  const [updateStatus, setUpdateStatus] = useState(null)
+  const [restarting, setRestarting] = useState(false)
 
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
+  }
+
+  useEffect(() => {
+    async function checkUpdate() {
+      try {
+        setUpdateStatus(await api.updateStatus())
+      } catch (err) {
+        if (err.isSessionExpired) return logout()
+        // A failed update check shouldn't disrupt the dashboard.
+      }
+    }
+    checkUpdate()
+    const timer = setInterval(checkUpdate, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  async function handleApplyUpdate() {
+    setRestarting(true)
+    try {
+      await api.applyUpdate()
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+      setRestarting(false)
+      return
+    }
+    setTimeout(() => window.location.reload(), 2500)
   }
 
   return (
@@ -27,6 +55,11 @@ export default function ManagerDashboard() {
           </p>
         </div>
         <div className="header-actions">
+          {updateStatus?.available && (
+            <button className="link-button" onClick={handleApplyUpdate} disabled={restarting}>
+              {restarting ? 'Restarting...' : `Update available (${updateStatus.latest_version}) — Restart to apply`}
+            </button>
+          )}
           <Link className="link-button" to="/qr">
             QR code
           </Link>

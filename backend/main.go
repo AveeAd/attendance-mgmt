@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"attendance-mgmt/backend/internal/db"
@@ -13,8 +16,13 @@ import (
 	"attendance-mgmt/backend/internal/middleware"
 	"attendance-mgmt/backend/internal/models"
 	"attendance-mgmt/backend/internal/service"
+	"attendance-mgmt/backend/internal/updater"
 	"attendance-mgmt/backend/internal/webui"
 )
+
+// updateRepoSlug is the "owner/repo" GitHub slug the in-app updater checks
+// for new releases. Update this if the repo is ever renamed/transferred.
+const updateRepoSlug = "AveeAd/attendance-mgmt"
 
 func main() {
 	dbPath := os.Getenv("ATTENDANCE_DB_PATH")
@@ -80,8 +88,27 @@ func main() {
 	}))
 
 	addr := ":" + port
+	srv := &http.Server{Addr: addr, Handler: mux}
+
+	// The updater needs a handle to the server so it can shut it down
+	// gracefully before restarting the process after applying an update.
+	upd := updater.New(updateRepoSlug, srv)
+	mux.Handle("GET /api/update-status", managerOnly(handlers.UpdateStatus(upd)))
+	mux.Handle("POST /api/update/apply", managerOnly(handlers.ApplyUpdate(upd)))
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go upd.StartBackgroundLoop(ctx)
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		srv.Shutdown(shutdownCtx)
+	}()
+
 	log.Printf("attendance-mgmt listening on %s (db: %s)", addr, dbPath)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server failed: %v", err)
 	}
 }

@@ -7,8 +7,20 @@ backend/internal/webui/dist/*
 !backend/internal/webui/dist/.gitkeep
 backend/*.db
 backend/*.db-*
+*.db
+*.db-shm
+*.db-wal
 /server
 /attendance-mgmt
+/attendance-mgmt-*
+/attendance-mgmt.exe
+/dist-raw/
+/out/
+
+# Local test artifacts from installer scripts
+installer/windows/attendance-mgmt.exe
+installer/windows/*-setup.exe
+installer/linux/attendance-mgmt
 
 # OS
 .DS_Store

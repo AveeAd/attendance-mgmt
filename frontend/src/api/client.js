@@ -105,4 +105,7 @@ export const api = {
   payrollExport: (year, month) => request(`/reports/payroll?year=${year}&month=${month}`),
 
   serverInfo: () => request('/server-info'),
+
+  updateStatus: () => request('/update-status'),
+  applyUpdate: () => request('/update/apply', { method: 'POST' }),
 }

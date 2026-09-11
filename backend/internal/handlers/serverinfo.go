@@ -3,11 +3,14 @@ package handlers
 import (
 	"net"
 	"net/http"
+
+	"attendance-mgmt/backend/internal/version"
 )
 
 type serverInfoResponse struct {
 	Addresses []string `json:"addresses"`
 	Port      string   `json:"port"`
+	Version   string   `json:"version"`
 }
 
 // ServerInfo handles GET /api/server-info (public — no login required, so
@@ -20,6 +23,7 @@ func ServerInfo(port string) http.HandlerFunc {
 		writeJSON(w, http.StatusOK, serverInfoResponse{
 			Addresses: localIPv4Addresses(),
 			Port:      port,
+			Version:   version.Version,
 		})
 	}
 }

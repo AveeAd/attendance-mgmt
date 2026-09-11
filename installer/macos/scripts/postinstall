@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Runs as root during pkg installation. Loads a per-user LaunchAgent for
+# the console user so the app starts automatically at login.
+#
+# The plist template is shipped as part of the pkg payload (at
+# /usr/local/attendance-mgmt/com.attendance-mgmt.app.plist), not looked up
+# relative to this script — pkgbuild's --scripts only bundles named
+# pre/postinstall scripts, not sibling files, so this script cannot find
+# other files via $(dirname "$0") at actual install time.
+set -euo pipefail
+
+CONSOLE_USER=$(stat -f%Su /dev/console)
+USER_HOME=$(dscl . -read "/Users/${CONSOLE_USER}" NFSHomeDirectory | awk '{print $2}')
+
+DB_DIR="${USER_HOME}/Library/Application Support/attendance-mgmt"
+DB_PATH="${DB_DIR}/attendance.db"
+mkdir -p "$DB_DIR"
+chown "${CONSOLE_USER}" "$DB_DIR"
+
+AGENTS_DIR="${USER_HOME}/Library/LaunchAgents"
+mkdir -p "$AGENTS_DIR"
+
+PLIST_SRC="/usr/local/attendance-mgmt/com.attendance-mgmt.app.plist"
+PLIST_DST="${AGENTS_DIR}/com.attendance-mgmt.app.plist"
+
+sed "s|__DB_PATH__|${DB_PATH}|" "$PLIST_SRC" > "$PLIST_DST"
+chown "${CONSOLE_USER}" "$PLIST_DST"
+
+# Unload first in case this is a reinstall/update over an existing agent.
+sudo -u "${CONSOLE_USER}" launchctl unload "$PLIST_DST" >/dev/null 2>&1 || true
+sudo -u "${CONSOLE_USER}" launchctl load -w "$PLIST_DST"
+
+exit 0

@@ -1,0 +1,14 @@
+[Unit]
+Description=Attendance Management System
+After=network.target
+
+[Service]
+Type=simple
+User=attendance-mgmt
+ExecStart=/usr/bin/attendance-mgmt
+Environment=ATTENDANCE_DB_PATH=/var/lib/attendance-mgmt/attendance.db
+Environment=ATTENDANCE_PORT=8080
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+name: attendance-mgmt
+arch: "${ARCH}"
+platform: linux
+version: "${VERSION}"
+section: misc
+priority: optional
+maintainer: "The Backyard <noreply@example.com>"
+description: |
+  Locally-hosted attendance management system — QR check-in/out,
+  employee registration, and payroll reporting.
+vendor: "The Backyard"
+homepage: "https://github.com/AveeAd/attendance-mgmt"
+license: "Proprietary"
+
+contents:
+  - src: ./attendance-mgmt
+    dst: /usr/bin/attendance-mgmt
+    file_info:
+      mode: 0755
+  - src: ./attendance-mgmt.service
+    dst: /lib/systemd/system/attendance-mgmt.service
+    file_info:
+      mode: 0644
+
+scripts:
+  postinstall: ./postinstall.sh
+  preremove: ./preremove.sh
