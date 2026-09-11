@@ -101,10 +101,10 @@ export default function StaffPunch() {
         <ChangePinForm onDone={() => setShowChangePin(false)} />
       ) : (
         <div className="footer-actions">
-          <button className="link-button" onClick={() => setShowChangePin(true)}>
+          <button className="button-secondary" onClick={() => setShowChangePin(true)}>
             Change PIN
           </button>
-          <button className="link-button" onClick={handleLogout}>
+          <button className="button-secondary" onClick={handleLogout}>
             Log out
           </button>
         </div>
