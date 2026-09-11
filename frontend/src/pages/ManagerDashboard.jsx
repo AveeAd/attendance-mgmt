@@ -183,7 +183,7 @@ function EmployeesTab() {
                 <td>{emp.employee_code}</td>
                 <td>{emp.name}</td>
                 <td>{emp.role}</td>
-                <td>{emp.pay_type === 'hourly' ? `$${emp.pay_rate}/hr` : `$${emp.pay_rate}/mo`}</td>
+                <td>{emp.pay_type === 'hourly' ? `NPR ${emp.pay_rate}/hr` : `NPR ${emp.pay_rate}/mo`}</td>
                 <td>{emp.device_id ? 'registered' : '—'}</td>
                 <td>
                   <div className="row-actions">
@@ -369,7 +369,7 @@ function ReportsTab() {
               <td>{r.name}</td>
               <td>{r.pay_type}</td>
               <td>{r.total_hours.toFixed(2)}</td>
-              <td>{r.pay_due != null ? `$${r.pay_due.toFixed(2)}` : '—'}</td>
+              <td>{r.pay_due != null ? `NPR ${r.pay_due.toFixed(2)}` : '—'}</td>
             </tr>
           ))}
         </tbody>

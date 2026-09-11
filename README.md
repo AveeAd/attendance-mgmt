@@ -62,10 +62,10 @@ these PINs in a real deployment.**
 
 | Employee ID | PIN  | Role    | Pay type       |
 |-------------|------|---------|-----------------|
-| `ADMIN1`    | 1234 | admin   | monthly ($0)    |
-| `MGR1`      | 2345 | manager | monthly ($3000) |
-| `STAFF1`    | 3456 | staff   | monthly ($2000) |
-| `TEMP1`     | 4567 | staff (temp) | hourly ($15/hr) |
+| `ADMIN1`    | 1234 | admin   | monthly (NPR 0)    |
+| `MGR1`      | 2345 | manager | monthly (NPR 3000) |
+| `STAFF1`    | 3456 | staff   | monthly (NPR 2000) |
+| `TEMP1`     | 4567 | staff (temp) | hourly (NPR 15/hr) |
 
 Log in with Employee ID + PIN at `/login`. Admin/manager accounts land on
 the manager dashboard; staff accounts land on the check-in/check-out page.
