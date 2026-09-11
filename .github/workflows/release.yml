@@ -47,9 +47,15 @@ jobs:
             goarch="${target#*/}"
             ext="${targets[$target]}"
             out="../dist-raw/attendance-mgmt-${goos}-${goarch}${ext}"
+            ldflags="-X attendance-mgmt/backend/internal/version.Version=${VERSION}"
+            # No console window on Windows — it runs unattended in the
+            # background, and log output goes to attendance.log instead.
+            if [ "$goos" = "windows" ]; then
+              ldflags="$ldflags -H=windowsgui"
+            fi
             echo "Building $out"
             GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build \
-              -ldflags "-X attendance-mgmt/backend/internal/version.Version=${VERSION}" \
+              -ldflags "$ldflags" \
               -o "$out" .
           done
 

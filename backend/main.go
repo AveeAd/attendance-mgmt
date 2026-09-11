@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -32,6 +34,16 @@ func main() {
 	port := os.Getenv("ATTENDANCE_PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	// The Windows build runs with no console attached (see build tags/
+	// -H=windowsgui), so log output needs somewhere to go besides stderr.
+	// Written next to the database, alongside the db file itself.
+	logPath := filepath.Join(filepath.Dir(dbPath), "attendance.log")
+	if logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		log.SetOutput(io.MultiWriter(os.Stderr, logFile))
+	} else {
+		log.Printf("could not open log file %s: %v", logPath, err)
 	}
 
 	conn, err := db.Open(dbPath)
