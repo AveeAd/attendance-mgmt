@@ -1,9 +1,10 @@
 ; NSIS installer for attendance-mgmt (Windows).
 ;
 ; Unsigned, per-user install — no admin/UAC prompt, true one-click.
-; Registers a Task Scheduler entry (ONLOGON trigger) so the app starts
-; automatically every time the user logs in, matching the product spec's
-; decided auto-start mechanism for Windows.
+; Auto-starts via a shortcut in the current user's Startup folder — this
+; is the standard "run at login" mechanism for a per-user app and needs
+; no schtasks.exe command-line quoting (which is genuinely hard to get
+; right and hard to verify without a real Windows machine to test on).
 ;
 ; Expects the raw binary at "attendance-mgmt.exe" next to this script
 ; (CI copies/renames the windows/amd64 build there before running
@@ -11,10 +12,9 @@
 ;   makensis installer\windows\attendance-mgmt.nsi
 
 !define APP_NAME "attendance-mgmt"
-!define TASK_NAME "AttendanceMgmt"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
-; Version can be overridden at build time: makensis /DVERSION=v1.2.3 ...
+; Version can be overridden at build time: makensis -DVERSION=v1.2.3 ...
 !ifndef VERSION
   !define VERSION "dev"
 !endif
@@ -33,8 +33,6 @@ UninstPage instfiles
 Function .onInit
   ; If already installed, stop the running app before overwriting it —
   ; this makes re-running the installer a valid (if secondary) update path.
-  nsExec::ExecToLog 'schtasks /End /TN "${TASK_NAME}"'
-  Pop $0
   nsExec::ExecToLog 'taskkill /IM attendance-mgmt.exe /F'
   Pop $0
 FunctionEnd
@@ -44,13 +42,13 @@ Section "Install"
   File "attendance-mgmt.exe"
   CreateDirectory "$INSTDIR\data"
 
-  ; Small launcher so the scheduled task can set ATTENDANCE_DB_PATH without
-  ; fighting schtasks' command-line quoting, and keeps data\ out of the
-  ; install root so an exe-only update never touches it.
+  ; Small launcher so we can set ATTENDANCE_DB_PATH and start the server
+  ; minimized (no console window in your face), and to keep data\ out of
+  ; the install root so an exe-only update never touches it.
   FileOpen $0 "$INSTDIR\run.bat" w
   FileWrite $0 "@echo off$\r$\n"
   FileWrite $0 'set ATTENDANCE_DB_PATH=%~dp0data\attendance.db$\r$\n'
-  FileWrite $0 'start "" "%~dp0attendance-mgmt.exe"$\r$\n'
+  FileWrite $0 'start /min "" "%~dp0attendance-mgmt.exe"$\r$\n'
   FileClose $0
 
   WriteRegStr HKCU "Software\${APP_NAME}" "InstallDir" "$INSTDIR"
@@ -64,25 +62,21 @@ Section "Install"
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoRepair" 1
 
-  ; Auto-start on every login for the current user, no elevation needed.
-  nsExec::ExecToLog 'schtasks /Create /TN "${TASK_NAME}" /TR "\"$INSTDIR\run.bat\"" /SC ONLOGON /RL LIMITED /F'
-  Pop $0
+  ; Auto-start on every login for the current user. $SMSTARTUP is NSIS's
+  ; built-in path for the current user's Startup folder.
+  CreateShortcut "$SMSTARTUP\Attendance Management System.lnk" "$INSTDIR\run.bat" "" "" 0 SW_SHOWMINIMIZED
 
-  ; schtasks /Run triggers the task via the Task Scheduler service and
-  ; returns immediately — it does not wait for the (long-running) app to
-  ; exit, unlike nsExec on the batch file directly.
-  nsExec::ExecToLog 'schtasks /Run /TN "${TASK_NAME}"'
-  Pop $0
+  ; Start it now too, so you don't have to log off/on to use it.
+  Exec '"$INSTDIR\run.bat"'
 
-  MessageBox MB_OK "Attendance Management System installed and started.$\r$\n$\r$\nIt will now start automatically every time you log in."
+  MessageBox MB_OK "Attendance Management System installed and started.$\r$\n$\r$\nOpen http://localhost:8080 in your browser.$\r$\n$\r$\nIt will now start automatically every time you log in."
 SectionEnd
 
 Section "Uninstall"
-  nsExec::ExecToLog 'schtasks /Delete /TN "${TASK_NAME}" /F'
-  Pop $0
   nsExec::ExecToLog 'taskkill /IM attendance-mgmt.exe /F'
   Pop $0
 
+  Delete "$SMSTARTUP\Attendance Management System.lnk"
   Delete "$INSTDIR\attendance-mgmt.exe"
   Delete "$INSTDIR\run.bat"
   Delete "$INSTDIR\uninstall.exe"
