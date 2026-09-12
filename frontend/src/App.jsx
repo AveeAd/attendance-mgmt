@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import ManagerDashboard from './pages/ManagerDashboard'
 import QrCode from './pages/QrCode'
+import ScanRedirect from './pages/ScanRedirect'
 import StaffPunch from './pages/StaffPunch'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
         }
       />
       <Route path="/qr" element={<QrCode />} />
+      <Route path="/scan" element={<ScanRedirect />} />
     </Routes>
   )
 }

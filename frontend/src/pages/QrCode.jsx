@@ -19,15 +19,15 @@ export default function QrCodePage() {
         setAddresses(info.addresses || [])
         setPort(info.port)
         if (info.addresses?.length) {
-          setUrl(`http://${info.addresses[0]}:${info.port}/login`)
+          setUrl(`http://${info.addresses[0]}:${info.port}/scan`)
         } else {
           // Fallback: can't detect a LAN address (e.g. offline dev machine).
           // The manager can still type the laptop's real address in by hand.
-          setUrl(`${window.location.origin}/login`)
+          setUrl(`${window.location.origin}/scan`)
         }
       } catch (err) {
         setError(err.message)
-        setUrl(`${window.location.origin}/login`)
+        setUrl(`${window.location.origin}/scan`)
       }
     }
     loadServerInfo()
@@ -63,7 +63,7 @@ export default function QrCodePage() {
             Laptop address
             <select value={url} onChange={(e) => setUrl(e.target.value)}>
               {addresses.map((addr) => (
-                <option key={addr} value={`http://${addr}:${port}/login`}>
+                <option key={addr} value={`http://${addr}:${port}/scan`}>
                   {addr}
                 </option>
               ))}
