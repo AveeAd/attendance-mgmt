@@ -91,6 +91,16 @@ func (c *Checker) StartBackgroundLoop(ctx context.Context) {
 	}
 }
 
+// CheckNow runs an update check immediately, bypassing the background
+// loop's interval, and returns the resulting status. Used by the manual
+// "Check for update" button. Unlike StartBackgroundLoop, this runs even for
+// dev builds — it'll just surface a "parse current version" error, which is
+// an accurate answer for a build with no real version.
+func (c *Checker) CheckNow() Status {
+	c.check()
+	return c.Status()
+}
+
 func (c *Checker) check() {
 	now := time.Now()
 

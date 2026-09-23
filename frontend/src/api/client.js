@@ -123,5 +123,6 @@ export const api = {
   serverInfo: () => request('/server-info'),
 
   updateStatus: () => request('/update-status'),
+  checkForUpdate: () => request('/update/check', { method: 'POST' }),
   applyUpdate: () => request('/update/apply', { method: 'POST' }),
 }

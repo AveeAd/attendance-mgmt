@@ -106,6 +106,7 @@ func main() {
 	// gracefully before restarting the process after applying an update.
 	upd := updater.New(updateRepoSlug, srv)
 	mux.Handle("GET /api/update-status", managerOnly(handlers.UpdateStatus(upd)))
+	mux.Handle("POST /api/update/check", managerOnly(handlers.CheckUpdate(upd)))
 	mux.Handle("POST /api/update/apply", managerOnly(handlers.ApplyUpdate(upd)))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

@@ -13,6 +13,7 @@ export default function ManagerDashboard() {
   const [showChangePin, setShowChangePin] = useState(false)
   const [updateStatus, setUpdateStatus] = useState(null)
   const [restarting, setRestarting] = useState(false)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   async function handleLogout() {
     await logout()
@@ -32,6 +33,17 @@ export default function ManagerDashboard() {
     const timer = setInterval(checkUpdate, 60000)
     return () => clearInterval(timer)
   }, [])
+
+  async function handleCheckUpdate() {
+    setCheckingUpdate(true)
+    try {
+      setUpdateStatus(await api.checkForUpdate())
+    } catch (err) {
+      if (err.isSessionExpired) return logout()
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }
 
   async function handleApplyUpdate() {
     setRestarting(true)
@@ -55,9 +67,13 @@ export default function ManagerDashboard() {
           </p>
         </div>
         <div className="header-actions">
-          {updateStatus?.available && (
+          {updateStatus?.available ? (
             <button className="link-button" onClick={handleApplyUpdate} disabled={restarting}>
               {restarting ? 'Restarting...' : `Update available (${updateStatus.latest_version}) — Restart to apply`}
+            </button>
+          ) : (
+            <button className="link-button" onClick={handleCheckUpdate} disabled={checkingUpdate}>
+              {checkingUpdate ? 'Checking...' : 'Check for update'}
             </button>
           )}
           <Link className="link-button" to="/qr">

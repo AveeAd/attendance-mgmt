@@ -15,6 +15,14 @@ func UpdateStatus(upd *updater.Checker) http.HandlerFunc {
 	}
 }
 
+// CheckUpdate handles POST /api/update/check (manager/admin only). Runs an
+// immediate check instead of waiting for the background loop's next tick.
+func CheckUpdate(upd *updater.Checker) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, upd.CheckNow())
+	}
+}
+
 // ApplyUpdate handles POST /api/update/apply (manager/admin only).
 // Responds first, then applies the update shortly after so the response
 // has a chance to flush before the server restarts.
