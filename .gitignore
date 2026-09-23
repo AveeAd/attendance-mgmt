@@ -24,3 +24,6 @@ installer/linux/attendance-mgmt
 
 # OS
 .DS_Store
+
+# Runtime logs
+*.log
