@@ -5,10 +5,12 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -31,10 +33,6 @@ func main() {
 	if dbPath == "" {
 		dbPath = "attendance.db"
 	}
-	port := os.Getenv("ATTENDANCE_PORT")
-	if port == "" {
-		port = "8080"
-	}
 
 	// The Windows build runs with no console attached (see build tags/
 	// -H=windowsgui), so log output needs somewhere to go besides stderr.
@@ -44,6 +42,11 @@ func main() {
 		log.SetOutput(io.MultiWriter(os.Stderr, logFile))
 	} else {
 		log.Printf("could not open log file %s: %v", logPath, err)
+	}
+
+	listener, port, err := listen(os.Getenv("ATTENDANCE_PORT"))
+	if err != nil {
+		log.Fatalf("failed to bind port: %v", err)
 	}
 
 	conn, err := db.Open(dbPath)
@@ -99,8 +102,7 @@ func main() {
 		fileServer.ServeHTTP(w, r)
 	}))
 
-	addr := ":" + port
-	srv := &http.Server{Addr: addr, Handler: mux}
+	srv := &http.Server{Handler: mux}
 
 	// The updater needs a handle to the server so it can shut it down
 	// gracefully before restarting the process after applying an update.
@@ -120,8 +122,34 @@ func main() {
 		srv.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("attendance-mgmt listening on %s (db: %s)", addr, dbPath)
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	log.Printf("attendance-mgmt listening on :%s (db: %s)", port, dbPath)
+	if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+// listen picks the port to bind to. An explicit ATTENDANCE_PORT is honored
+// as-is (fail loudly if it's unavailable — the operator asked for it). With
+// no override, 8080 is common enough to already be taken by something else
+// on the machine, so we try it first and fall back to letting the OS assign
+// any free port rather than refusing to start.
+func listen(explicitPort string) (net.Listener, string, error) {
+	if explicitPort != "" {
+		ln, err := net.Listen("tcp", ":"+explicitPort)
+		if err != nil {
+			return nil, "", err
+		}
+		return ln, explicitPort, nil
+	}
+
+	ln, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Printf("port 8080 unavailable (%v), asking OS for a free port instead", err)
+		ln, err = net.Listen("tcp", ":0")
+		if err != nil {
+			return nil, "", err
+		}
+	}
+	port := strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
+	return ln, port, nil
 }
