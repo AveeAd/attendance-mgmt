@@ -11,6 +11,9 @@
 ; makensis). Build with:
 ;   makensis installer\windows\attendance-mgmt.nsi
 
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
+
 !define APP_NAME "attendance-mgmt"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -25,6 +28,11 @@ InstallDir "$LOCALAPPDATA\${APP_NAME}"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 
+Var PortDialog
+Var PortInput
+Var PortValue
+
+Page custom PortPageCreate PortPageLeave
 Page directory
 Page instfiles
 UninstPage uninstConfirm
@@ -35,6 +43,79 @@ Function .onInit
   ; this makes re-running the installer a valid (if secondary) update path.
   nsExec::ExecToLog 'taskkill /IM attendance-mgmt.exe /F'
   Pop $0
+FunctionEnd
+
+Function PortPageCreate
+  nsDialogs::Create 1018
+  Pop $PortDialog
+  ${If} $PortDialog == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 36u "Port the server listens on. Leave blank (or 8080) to use the default — it'll automatically pick a different free port if 8080 is already taken on this machine."
+  Pop $0
+
+  ${NSD_CreateText} 0 40u 100u 12u "8080"
+  Pop $PortInput
+
+  nsDialogs::Show
+FunctionEnd
+
+Function PortPageLeave
+  ${NSD_GetText} $PortInput $PortValue
+
+  ${If} $PortValue != ""
+    Push $PortValue
+    Call IsValidPort
+    Pop $0
+    ${If} $0 == "0"
+      MessageBox MB_OK "Enter a valid port number (1-65535), or leave it blank."
+      Abort
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
+; Pushes "1" if the string on the stack is 1-5 ASCII digits and in range
+; 1-65535, else "0". NSIS has no numeric regex, so this walks the string.
+Function IsValidPort
+  Exch $0
+  Push $1
+  Push $2
+  Push $3
+
+  StrLen $1 $0
+  ${If} $1 == 0
+  ${OrIf} $1 > 5
+    StrCpy $0 "0"
+    Goto done
+  ${EndIf}
+
+  StrCpy $2 0
+  loop:
+    ${If} $2 >= $1
+      Goto digits_ok
+    ${EndIf}
+    StrCpy $3 $0 1 $2
+    ${If} $3 < "0"
+    ${OrIf} $3 > "9"
+      StrCpy $0 "0"
+      Goto done
+    ${EndIf}
+    IntOp $2 $2 + 1
+    Goto loop
+
+  digits_ok:
+    ${If} $0 > 65535
+      StrCpy $0 "0"
+    ${Else}
+      StrCpy $0 "1"
+    ${EndIf}
+
+  done:
+  Pop $3
+  Pop $2
+  Pop $1
+  Exch $0
 FunctionEnd
 
 Section "Install"
@@ -48,6 +129,10 @@ Section "Install"
   FileOpen $0 "$INSTDIR\run.bat" w
   FileWrite $0 "@echo off$\r$\n"
   FileWrite $0 'set ATTENDANCE_DB_PATH=%~dp0data\attendance.db$\r$\n'
+  ${If} $PortValue != ""
+  ${AndIf} $PortValue != "8080"
+    FileWrite $0 'set ATTENDANCE_PORT=$PortValue$\r$\n'
+  ${EndIf}
   FileWrite $0 'start /min "" "%~dp0attendance-mgmt.exe"$\r$\n'
   FileClose $0
 
@@ -69,7 +154,11 @@ Section "Install"
   ; Start it now too, so you don't have to log off/on to use it.
   Exec '"$INSTDIR\run.bat"'
 
-  MessageBox MB_OK "Attendance Management System installed and started.$\r$\n$\r$\nOpen http://localhost:8080 in your browser.$\r$\n$\r$\nIt will now start automatically every time you log in."
+  StrCpy $1 $PortValue
+  ${If} $1 == ""
+    StrCpy $1 "8080"
+  ${EndIf}
+  MessageBox MB_OK "Attendance Management System installed and started.$\r$\n$\r$\nOpen http://localhost:$1 in your browser (if port $1 was already in use, it picked a different free one — check the app for the exact address).$\r$\n$\r$\nIt will now start automatically every time you log in."
 SectionEnd
 
 Section "Uninstall"
